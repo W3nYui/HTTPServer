@@ -3,7 +3,7 @@
 void RegisterHandler::handle(const http::HttpRequest& req, http::HttpResponse* resp)
 {
     // 解析body(json格式)
-    json parsed = json::parse(req.getBody());
+    json parsed = json::parse(req.getBody()); // 前端通过fetch发送json格式的请求体 json的内容是提前定义的格式
     std::string username = parsed["username"];
     std::string password = parsed["password"];
 
