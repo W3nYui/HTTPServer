@@ -30,9 +30,9 @@ int main(int argc, char* argv[])
         break;
     }
   }
-  
+  muduo::net::TcpServer::Option option = muduo::net::TcpServer::kReusePort; //option : reuse 允许多个进程绑定同一端口，适用于多线程服务器，提升性能
   muduo::Logger::setLogLevel(muduo::Logger::WARN); // 设定日志级别为WARN，减少日志输出量
-  GomokuServer server(port, serverName); // 创建HTTP服务器实例 设定端口号与服务器名称
+  GomokuServer server(port, serverName, option); // 创建HTTP服务器实例 设定端口号与服务器名称
   server.setThreadNum(4); // 设置服务器线程数为4，允许服务器同时处理多个请求，提高性能
   server.start();
 }
