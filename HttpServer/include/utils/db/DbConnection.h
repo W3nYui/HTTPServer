@@ -39,10 +39,11 @@ public:
         try 
         {
             // 直接创建新的预处理语句，不使用缓存
-            std::unique_ptr<sql::PreparedStatement> stmt(
-                conn_->prepareStatement(sql) // 创建预处理语句
+            std::unique_ptr<sql::PreparedStatement> stmt( // 预处理可以避免SQL将输入内容识别为SQL语句
+                conn_->prepareStatement(sql) // 创建预处理语句 利用?占位符来表述参数位置 并利用bindParams方法来绑定参数值
             );
-            bindParams(stmt.get(), 1, std::forward<Args>(args)...);
+            // 预处理语句会让占位符的编号从1开始 所以这里从1开始绑定参数
+            bindParams(stmt.get(), 1, std::forward<Args>(args)...); // 获取独占指针 保证后续的修改会在语句中
             return stmt->executeQuery();
         } 
         catch (const sql::SQLException& e) 
