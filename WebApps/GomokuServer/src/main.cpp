@@ -10,8 +10,7 @@ int main(int argc, char* argv[])
 {
   // 利用muduo的日志输出当前pid
   LOG_INFO << "pid = " << getpid();
-
-  std::string serverName = "HttpServer";
+  std::string serverName = "Simple HttpServer";
   int port = 80;
   
   // 参数解析
@@ -30,9 +29,10 @@ int main(int argc, char* argv[])
         break;
     }
   }
-  muduo::net::TcpServer::Option option = muduo::net::TcpServer::kReusePort; //option : reuse 允许多个进程绑定同一端口，适用于多线程服务器，提升性能
+  muduo::net::TcpServer::Option option = muduo::net::TcpServer::kNoReusePort; // 默认不复用端口，避免端口冲突
+  // muduo::net::TcpServer::Option option = muduo::net::TcpServer::kReusePort; //option : reuse 允许多个进程绑定同一端口，适用于多线程服务器，提升性能
   muduo::Logger::setLogLevel(muduo::Logger::WARN); // 设定日志级别为WARN，减少日志输出量
-  GomokuServer server(port, serverName, option); // 创建HTTP服务器实例 设定端口号与服务器名称
+  GomokuServer server(port, serverName, option); // 创建HTTP服务器实例 设定端口号与服务器名称 并调用构造函数内的初始化 初始化网络层
   server.setThreadNum(4); // 设置服务器线程数为4，允许服务器同时处理多个请求，提高性能
   server.start();
 }

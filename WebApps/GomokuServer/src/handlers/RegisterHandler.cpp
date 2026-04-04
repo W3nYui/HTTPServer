@@ -17,7 +17,7 @@ void RegisterHandler::handle(const http::HttpRequest& req, http::HttpResponse* r
         successResp["status"] = "success";
         successResp["message"] = "Register successful";
         successResp["userId"] = userId;
-        std::string successBody = successResp.dump(4);
+        std::string successBody = successResp.dump(4); // 格式化json字符串 4个空格缩进
 
         resp->setStatusLine(req.getVersion(), http::HttpResponse::k200Ok, "OK");
         resp->setCloseConnection(false);

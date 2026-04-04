@@ -14,7 +14,7 @@ namespace http
 {
 namespace db 
 {
-
+// 该类封装了mysql连接实例 并提供了连接的创建、重连、清理等方法
 class DbConnection 
 {
 public:
@@ -40,7 +40,7 @@ public:
         {
             // 直接创建新的预处理语句，不使用缓存
             std::unique_ptr<sql::PreparedStatement> stmt(
-                conn_->prepareStatement(sql)
+                conn_->prepareStatement(sql) // 创建预处理语句
             );
             bindParams(stmt.get(), 1, std::forward<Args>(args)...);
             return stmt->executeQuery();
@@ -96,7 +96,7 @@ private:
     }
 
 private:
-    std::shared_ptr<sql::Connection> conn_;
+    std::shared_ptr<sql::Connection> conn_; // mysql连接实例指针
     std::string                      host_;
     std::string                      user_;
     std::string                      password_;

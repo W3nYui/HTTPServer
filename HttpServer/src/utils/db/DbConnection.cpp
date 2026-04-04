@@ -18,12 +18,12 @@ DbConnection::DbConnection(const std::string& host,
 {
     try 
     {
-        sql::mysql::MySQL_Driver* driver = sql::mysql::get_mysql_driver_instance();
-        conn_.reset(driver->connect(host_, user_, password_));
+        sql::mysql::MySQL_Driver* driver = sql::mysql::get_mysql_driver_instance(); // 获取mysql驱动实例
+        conn_.reset(driver->connect(host_, user_, password_)); // 设置mysql连接实例指针
+        // LOG_WARN << "Database connection created";  
         if (conn_) 
         {
             conn_->setSchema(database_);
-            
             // 设置连接属性
             conn_->setClientOption("OPT_RECONNECT", "true");
             conn_->setClientOption("OPT_CONNECT_TIMEOUT", "10");
@@ -91,6 +91,7 @@ void DbConnection::reconnect()
 {
     try 
     {
+        // 封装 mysql 重连逻辑
         if (conn_) 
         {
             conn_->reconnect();
@@ -98,7 +99,7 @@ void DbConnection::reconnect()
         else 
         {
             sql::mysql::MySQL_Driver* driver = sql::mysql::get_mysql_driver_instance();
-            conn_.reset(driver->connect(host_, user_, password_));
+            conn_.reset(driver->connect(host_, user_, password_)); // 重设链接
             conn_->setSchema(database_);
         }
     } 

@@ -11,7 +11,7 @@ void DbConnectionPool::init(const std::string& host,
                           const std::string& user,
                           const std::string& password,
                           const std::string& database,
-                          size_t poolSize) 
+                          size_t poolSize)
 {
     // 连接池会被多个线程访问，所以操作其成员变量时需要加锁
     std::lock_guard<std::mutex> lock(mutex_);
@@ -25,11 +25,12 @@ void DbConnectionPool::init(const std::string& host,
     user_ = user;
     password_ = password;
     database_ = database;
+    LOG_WARN << "Initializing connection pool with dataBase : " << database_;
 
     // 创建连接
     for (size_t i = 0; i < poolSize; ++i) 
     {
-        connections_.push(createConnection());
+        connections_.push(createConnection()); // 将mysql连接实例压入连接池
     }
 
     initialized_ = true;
@@ -66,11 +67,11 @@ std::shared_ptr<DbConnection> DbConnectionPool::getConnection()
                 throw DbException("Connection pool not initialized");
             }
             LOG_INFO << "Waiting for available connection...";
-            cv_.wait(lock);
+            cv_.wait(lock); // 等待唤醒，有连接可用时唤醒
         }
         
         conn = connections_.front();
-        connections_.pop();
+        connections_.pop(); // 获取链接 就要从连接池中移除
     } // 释放锁
     
     try 
@@ -81,9 +82,9 @@ std::shared_ptr<DbConnection> DbConnectionPool::getConnection()
             LOG_WARN << "Connection lost, attempting to reconnect...";
             conn->reconnect();
         }
-        
+        // 返回一个mysql的连接 并利用lambda表达式 实现连接被销毁时触发的函数
         return std::shared_ptr<DbConnection>(conn.get(), 
-            [this, conn](DbConnection*) {
+            [this, conn](DbConnection* /*unused variable*/) { // 捕获this(连接池类)和conn的引用
                 std::lock_guard<std::mutex> lock(mutex_);
                 connections_.push(conn);
                 cv_.notify_one();

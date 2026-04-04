@@ -38,7 +38,7 @@ public:
     // 构造函数
     HttpServer(int port,
                const std::string& name,
-               bool useSSL = false,
+               bool useSSL = false, // 默认不使用SSL 是HTTP协议
                muduo::net::TcpServer::Option option = muduo::net::TcpServer::kNoReusePort);
     
     void setThreadNum(int numThreads)

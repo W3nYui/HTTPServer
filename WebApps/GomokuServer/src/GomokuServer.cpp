@@ -12,11 +12,11 @@
 #include "../../../HttpServer/include/http/HttpServer.h"
 
 using namespace http;
-
+// 应用层服务器 初始化 调度底层网络层
 GomokuServer::GomokuServer(int port,
                            const std::string &name,
                            muduo::net::TcpServer::Option option)
-    : httpServer_(port, name, option), maxOnline_(0)
+    : httpServer_(port, name, false, option), maxOnline_(0) // 这里httpServer_是muduo的HttpServer实例，用于处理HTTP请求 但是传参不匹配
 {
     initialize();
 }
@@ -34,6 +34,7 @@ void GomokuServer::start()
 void GomokuServer::initialize()
 {
     // 初始化数据库连接池
+    // mysql是使用tcp协议进行连接的 因为指定了mysql的监听端口为3306 所以这里也指定了3306 同时设定连接池大小为10(只有10个线程会同时连接数据库)
     http::MysqlUtil::init("tcp://127.0.0.1:3306", "root", "root", "Gomoku", 10);
     // 初始化会话
     initializeSession();

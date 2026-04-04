@@ -33,7 +33,7 @@ class GomokuServer
 public:
     GomokuServer(int port,
                  const std::string& name,
-                 muduo::net::TcpServer::Option option = muduo::net::TcpServer::kNoReusePort);
+                 muduo::net::TcpServer::Option option = muduo::net::TcpServer::kNoReusePort); // 默认不复用端口
 
     void setThreadNum(int numThreads);
     void start();
