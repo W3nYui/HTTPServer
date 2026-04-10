@@ -23,20 +23,22 @@ std::shared_ptr<Session> SessionManager::getSession(const HttpRequest& req, Http
 
     if (!sessionId.empty())
     {
-        session = storage_->load(sessionId);
+        session = storage_->load(sessionId); // 获得会话对象 如果该对象已经过期 会在load中移除
     }
 
-    if (!session || session->isExpired())
+    if (!session || session->isExpired()) // 获得失败或者会话过期
     {
-        sessionId = generateSessionId();
+        sessionId = generateSessionId(); // 生成新的会话ID
         session = std::make_shared<Session>(sessionId, this);
-        setSessionCookie(sessionId, resp);
+        setSessionCookie(sessionId, resp); // 给新的http链接设置会话ID的cookie
     }
     else 
     {
-        session->setManager(this); // 为现有会话设置管理器
+        if (!session->getManager()) {
+            session->setManager(this); // 为现有会话设置管理器
+        }
     }
-
+    // 更新会话状态 刷新过期时间
     session->refresh();
     storage_->save(session);  // 这里可能有问题，需要确保正确保存会话
     return session;
@@ -61,6 +63,7 @@ void SessionManager::destroySession(const std::string& sessionId)
     storage_->remove(sessionId);
 }
 
+// 这里没有从管理类实现 这里从存储类在load时实现 检查是否过期
 void SessionManager::cleanExpiredSessions()
 {
     // 注意：这个实现依赖于具体的存储实现
@@ -68,10 +71,15 @@ void SessionManager::cleanExpiredSessions()
     // 对于其他存储的实现，可能需要定期清理过期会话
 }
 
+/**
+ * @brief 从请求中获取会话ID
+ * @param req HTTP请求对象
+ * @return std::string 会话ID字符串
+ * */
 std::string SessionManager::getSessionIdFromCookie(const HttpRequest& req)
 {
     std::string sessionId;
-    std::string cookie = req.getHeader("Cookie");
+    std::string cookie = req.getHeader("Cookie"); // 获取http请求头中的cookie
 
     if (!cookie.empty())
     {
@@ -79,12 +87,12 @@ std::string SessionManager::getSessionIdFromCookie(const HttpRequest& req)
         if (pos != std::string::npos)
         {
             pos += 10; // 跳过"sessionId="
-            size_t end = cookie.find(';', pos);
-            if (end != std::string::npos)
+            size_t end = cookie.find(';', pos); // 从pos位置开始查找到第一个分号的索引
+            if (end != std::string::npos) // 找到分号 返回区间
             {
                 sessionId = cookie.substr(pos, end - pos);
             }
-            else
+            else // 没有找到 返回剩余字符串(可能后面没有其他内容 没有分号了)
             {
                 sessionId = cookie.substr(pos);
             }

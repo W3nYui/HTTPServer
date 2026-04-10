@@ -10,7 +10,10 @@ namespace http
 {
 namespace session
 {
-
+/**
+ * @brief 会话管理器类 用于管理会话存储类的实例
+ * 定义了对会话内存类的管理功能 : 获取会话、销毁会话、清理过期会话、更新会话等接口
+ * */
 class SessionManager
 {
 public:

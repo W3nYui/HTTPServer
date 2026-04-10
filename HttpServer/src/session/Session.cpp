@@ -34,8 +34,9 @@ void Session::setValue(const std::string& key, const std::string& value)
     // 如果设置了manager，自动保存更改
     if (sessionManager_)
     {
-        sessionManager_->updateSession(shared_from_this());
+        sessionManager_->updateSession(shared_from_this()); // 更新会话数据
     }
+    refresh(); // 因为更新了 所以需要刷新过期时间
 }
 
 // 获取会话数据

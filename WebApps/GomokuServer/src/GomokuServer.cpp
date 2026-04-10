@@ -37,7 +37,7 @@ void GomokuServer::initialize()
     // mysql是使用tcp协议进行连接的 因为指定了mysql的监听端口为3306 所以这里也指定了3306 同时设定连接池大小为10(只有10个线程会同时连接数据库)
     http::MysqlUtil::init("tcp://127.0.0.1:3306", "root", "root", "Gomoku", 10);
     // 初始化会话
-    initializeSession();
+    initializeSession(); // session 用来存储用户登录状态 因为http是无状态的 所以需要使用session来存储控制用户登录状态、游戏状态、访问权限等
     // 初始化中间件
     initializeMiddleware();
     // 初始化路由
@@ -46,9 +46,10 @@ void GomokuServer::initialize()
 
 void GomokuServer::initializeSession()
 {
-    // 创建会话存储
+    // session -> sessionStorage -> sessionManager
+    // 创建会话存储类对象
     auto sessionStorage = std::make_unique<http::session::MemorySessionStorage>();
-    // 创建会话管理器
+    // 创建会话管理器 管理会话存储类 即对外接口
     auto sessionManager = std::make_unique<http::session::SessionManager>(std::move(sessionStorage));
     // 设置会话管理器
     setSessionManager(std::move(sessionManager));

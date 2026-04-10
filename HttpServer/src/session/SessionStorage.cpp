@@ -9,7 +9,7 @@ namespace session
 
 void MemorySessionStorage::save(std::shared_ptr<Session> session)
 {
-    // 创建会话副本并存储
+    // 保存会话对象到内存存储
     sessions_[session->getId()] = session;
 }
 
