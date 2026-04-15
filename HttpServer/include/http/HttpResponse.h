@@ -11,15 +11,15 @@ public:
     enum HttpStatusCode
     {
         kUnknown,
-        k200Ok = 200,
-        k204NoContent = 204,
-        k301MovedPermanently = 301,
-        k400BadRequest = 400,
-        k401Unauthorized = 401,
-        k403Forbidden = 403,
-        k404NotFound = 404,
-        k409Conflict = 409,
-        k500InternalServerError = 500,
+        k200Ok = 200, // 成功
+        k204NoContent = 204, // 无内容
+        k301MovedPermanently = 301, // 永久重定向
+        k400BadRequest = 400, // 请求错误
+        k401Unauthorized = 401, // 未授权
+        k403Forbidden = 403, // 无权访问该网页资源
+        k404NotFound = 404, // 未找到该网页资源
+        k409Conflict = 409, // 冲突
+        k500InternalServerError = 500, // 服务器内部错误
     };
 
     HttpResponse(bool close = true)

@@ -7,16 +7,16 @@ namespace http
 {
 namespace middleware 
 {
-
+// 纯虚函数 作为中间件的基类 定义接口
 class Middleware 
 {
 public:
     virtual ~Middleware() = default;
     
-    // 请求前处理
+    // 请求(handler)前处理
     virtual void before(HttpRequest& request) = 0;
     
-    // 响应后处理
+    // 响应(handler)后处理
     virtual void after(HttpResponse& response) = 0;
     
     // 设置下一个中间件
