@@ -53,12 +53,17 @@ public:
         }
     };
 
+    // 一共四种路由注册方式
+    // 1. 静态注册 以对象式注册 或 回调式注册 -> 创建hash表 存储对象或回调函数
+    // 2. 动态路由注册 以对象式注册 或 回调式注册 -> 创建vector
+
     // 注册路由处理器 以对象式注册 静态注册
     void registerHandler(HttpRequest::Method method, const std::string &path, HandlerPtr handler);
 
     // 注册回调函数形式的处理器 以回调式注册 静态注册
     void registerCallback(HttpRequest::Method method, const std::string &path, const HandlerCallback &callback);
 
+    // 动态路由用于模式匹配 路径参数提取 动态路由是为了解决动态名问题，如 /user/:id 可以匹配 /user/123 或 /user/453，这样每个用户都有自己的路由且不用注册多个路由
     // 注册动态路由处理器 以对象式注册 动态路由注册
     void addRegexHandler(HttpRequest::Method method, const std::string &path, HandlerPtr handler)
     {
@@ -77,13 +82,24 @@ public:
     bool route(const HttpRequest &req, HttpResponse *resp);
 
 private:
+    /**
+     * @brief 将路径模式转换为正则表达式，支持匹配任意路径参数
+     * @param pathPattern 路径模式，如 /user/:id
+     * @return std::regex 转换后的正则表达式，如 ^/user/([^/]+)$
+     */
     std::regex convertToRegex(const std::string &pathPattern)
-    { // 将路径模式转换为正则表达式，支持匹配任意路径参数
+    {
+        // 将 /:任意非斜杠字符 转换为 /([^/]+) （匹配任意非斜杠字符）
         std::string regexPattern = "^" + std::regex_replace(pathPattern, std::regex(R"(/:([^/]+))"), R"(/([^/]+))") + "$";
         return std::regex(regexPattern);
     }
 
     // 提取路径参数
+    /**
+     * @brief 从正则匹配结果中提取路径参数
+     * @param match 正则匹配结果
+     * @param request 请求对象
+     */
     void extractPathParameters(const std::smatch &match, HttpRequest &request)
     {
         // Assuming the first match is the full path, parameters start from index 1

@@ -71,6 +71,7 @@ void GomokuServer::initializeMiddleware()
 void GomokuServer::initializeRouter()
 {
     // 注册url回调处理器
+    // get用于获取数据 post用于提交数据
     // 登录注册入口页面
     httpServer_.Get("/", std::make_shared<EntryHandler>(this));
     httpServer_.Get("/entry", std::make_shared<EntryHandler>(this));

@@ -13,6 +13,12 @@ public:
     void handle(const http::HttpRequest& req, http::HttpResponse* resp) override;
 
 private:
+    /**
+     * @brief 查询用户 ID
+     * @param username 用户名
+     * @param password 密码
+     * @return int 用户 ID
+     */
     int queryUserId(const std::string& username, const std::string& password);
 
 private:

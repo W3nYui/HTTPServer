@@ -47,7 +47,7 @@ void HttpRequest::setPath(const char *start, const char *end)
 
 void HttpRequest::setPathParameters(const std::string &key, const std::string &value)
 {
-    pathParameters_[key] = value;
+    pathParameters_[key] = value; // 定义返回参数的键值对 比如 /user/:id 中的 :id 就是路径参数，那么parameter1 = id
 }
 
 std::string HttpRequest::getPathParameters(const std::string &key) const

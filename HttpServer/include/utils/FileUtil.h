@@ -6,6 +6,11 @@
 
 #include <muduo/base/Logging.h>
 
+/**
+ * @brief 文件工具类
+ * 
+ * 用于打开、读取、关闭文件
+ */
 class FileUtil
 {
 public:
@@ -51,6 +56,6 @@ public:
     }
 
 private:
-    std::string     filePath_;
-    std::ifstream   file_;
+    std::string     filePath_; // 文件路径
+    std::ifstream   file_; // 文件流
 };
