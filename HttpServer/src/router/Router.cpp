@@ -9,7 +9,7 @@ namespace router
 void Router::registerHandler(HttpRequest::Method method, const std::string &path, HandlerPtr handler)
 {
     RouteKey key{method, path};
-    handlers_[key] = std::move(handler);
+    handlers_[key] = std::move(handler); // 往handlers_中插入该方法以及该路径的处理器
 }
 
 void Router::registerCallback(HttpRequest::Method method, const std::string &path, const HandlerCallback &callback)

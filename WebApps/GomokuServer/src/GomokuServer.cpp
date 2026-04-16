@@ -63,6 +63,11 @@ void GomokuServer::initializeMiddleware()
     httpServer_.addMiddleware(corsMiddleware);
 }
 
+/**
+ * @brief 初始化路由
+ * 注册url回调处理器 分别使用了注册对象和注册回调式
+ * @param response HTTP响应
+ */
 void GomokuServer::initializeRouter()
 {
     // 注册url回调处理器
@@ -83,7 +88,7 @@ void GomokuServer::initializeRouter()
     httpServer_.Post("/aiBot/move", std::make_shared<AiGameMoveHandler>(this));
     // 重新开始对战ai
     httpServer_.Get("/aiBot/restart", 
-    [this](const http::HttpRequest& req, http::HttpResponse* resp) {
+    [this](const http::HttpRequest& req, http::HttpResponse* resp) { // 采用注册回调式处理 因为逻辑简单
             restartChessGameVsAi(req, resp);
     });
 

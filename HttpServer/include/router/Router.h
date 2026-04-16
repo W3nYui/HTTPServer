@@ -22,14 +22,14 @@ namespace router
 class Router
 {
 public:
-    using HandlerPtr = std::shared_ptr<RouterHandler>;
-    using HandlerCallback = std::function<void(const HttpRequest &, HttpResponse *)>;
+    using HandlerPtr = std::shared_ptr<RouterHandler>; // 对象式路由处理器指针
+    using HandlerCallback = std::function<void(const HttpRequest &, HttpResponse *)>; // 回调式路由处理器函数指针
 
-    // 路由键（请求方法 + URI）
+    // 路由键（请求方法 + URL）
     struct RouteKey
     {
-        HttpRequest::Method method;
-        std::string path;
+        HttpRequest::Method method; // HTTP 请求方法
+        std::string path; // URL 路径
 
         bool operator==(const RouteKey &other) const
         {
@@ -45,7 +45,7 @@ public:
         //     return std::hash<int>{}(static_cast<int>(key.method)) ^
         //            std::hash<std::string>{}(key.path);
         // }
-        size_t operator()(const RouteKey &key) const
+        size_t operator()(const RouteKey &key) const // 为RouteKey 定义哈希函数 组合计算哈希值
         {
             size_t methodHash = std::hash<int>{}(static_cast<int>(key.method));
             size_t pathHash = std::hash<std::string>{}(key.path);
@@ -53,20 +53,20 @@ public:
         }
     };
 
-    // 注册路由处理器
+    // 注册路由处理器 以对象式注册 静态注册
     void registerHandler(HttpRequest::Method method, const std::string &path, HandlerPtr handler);
 
-    // 注册回调函数形式的处理器
+    // 注册回调函数形式的处理器 以回调式注册 静态注册
     void registerCallback(HttpRequest::Method method, const std::string &path, const HandlerCallback &callback);
 
-    // 注册动态路由处理器
+    // 注册动态路由处理器 以对象式注册 动态路由注册
     void addRegexHandler(HttpRequest::Method method, const std::string &path, HandlerPtr handler)
     {
         std::regex pathRegex = convertToRegex(path);
         regexHandlers_.emplace_back(method, pathRegex, handler);
     }
 
-    // 注册动态路由处理函数
+    // 注册动态路由处理函数 以回调式注册 动态路由注册
     void addRegexCallback(HttpRequest::Method method, const std::string &path, const HandlerCallback &callback)
     {
         std::regex pathRegex = convertToRegex(path);
