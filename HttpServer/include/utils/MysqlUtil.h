@@ -27,6 +27,13 @@ public:
     }
 
     template<typename... Args>
+    /**
+     * @brief 执行更新操作
+     * 
+     * @param sql 更新语句
+     * @param args 更新语句中的占位符参数
+     * @return int 更新的行数
+     */
     int executeUpdate(const std::string& sql, Args&&... args)
     {
         auto conn = http::db::DbConnectionPool::getInstance().getConnection();

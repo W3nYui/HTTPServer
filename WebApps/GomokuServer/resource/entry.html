@@ -259,6 +259,10 @@
                         setTimeout(showLogin, 1000); // 1秒后回到登录界面
                     } else if (response.status === 409) {
                         alert('用户名已被注册，请重新输入！');
+                    } else if (response.status === 500) {
+                        alert('服务器内部错误，请稍后重试！');
+                    } else {
+                        alert('注册失败，请联系管理员！');
                     }
                 })
                 .catch(error => console.error('注册错误:', error));
