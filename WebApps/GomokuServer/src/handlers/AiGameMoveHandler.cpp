@@ -34,7 +34,7 @@ void AiGameMoveHandler::handle(const http::HttpRequest &req, http::HttpResponse 
         auto &game = server_->aiGames_[userId];
 
         // 处理人类玩家移动
-        if (!game->humanMove(x, y))
+        if (!game->humanMove(x, y)) // 执行移动 并更新棋盘(游戏状态)
         {
             json response = {
                 {"status", "error"},

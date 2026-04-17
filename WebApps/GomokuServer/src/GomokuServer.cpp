@@ -18,7 +18,7 @@ GomokuServer::GomokuServer(int port,
                            muduo::net::TcpServer::Option option)
     : httpServer_(port, name, false, option), maxOnline_(0) // 这里httpServer_是muduo的HttpServer实例，用于处理HTTP请求 但是传参不匹配
 {
-    initialize();
+    initialize(); // 初始化会话管理、中间件管理、路由
 }
 
 void GomokuServer::setThreadNum(int numThreads)
@@ -83,7 +83,7 @@ void GomokuServer::initializeRouter()
     httpServer_.Post("/user/logout", std::make_shared<LogoutHandler>(this));
     // 菜单页面
     httpServer_.Get("/menu", std::make_shared<MenuHandler>(this));
-    // 开始对战ai
+    // 开始对战ai -> 返回对战界面
     httpServer_.Get("/aiBot/start", std::make_shared<AiGameStartHandler>(this));
     // 下棋
     httpServer_.Post("/aiBot/move", std::make_shared<AiGameMoveHandler>(this));
@@ -93,7 +93,7 @@ void GomokuServer::initializeRouter()
             restartChessGameVsAi(req, resp);
     });
 
-    // 后台界面
+    // 后台界面 会执行一次后台数据获取
     httpServer_.Get("/backend", std::make_shared<GameBackendHandler>(this));
     // 后台数据获取
     httpServer_.Get("/backend_data", [this](const http::HttpRequest& req, http::HttpResponse* resp) {
@@ -122,8 +122,8 @@ void GomokuServer::restartChessGameVsAi(const http::HttpRequest &req, http::Http
     int userId = std::stoi(session->getValue("userId"));
     {
         // 重新开始ai对战
-        std::lock_guard<std::mutex> lock(mutexForAiGames_);
-        if (aiGames_.find(userId) != aiGames_.end())
+        std::lock_guard<std::mutex> lock(mutexForAiGames_); 
+        if (aiGames_.find(userId) != aiGames_.end()) // 如果用户正在游戏中 则先删除旧的游戏实例 然后创建新的游戏实例 作为新的游戏状态
             aiGames_.erase(userId);
         aiGames_[userId] = std::make_shared<AiGame>(userId);
     }

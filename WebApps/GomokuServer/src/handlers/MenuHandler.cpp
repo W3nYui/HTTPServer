@@ -23,8 +23,8 @@ void MenuHandler::handle(const http::HttpRequest &req, http::HttpResponse *resp)
         }
 
         // 获取用户信息
-        int userId = std::stoi(session->getValue("userId"));
-        std::string username = session->getValue("username");
+        int userId = std::stoi(session->getValue("userId")); // 这里的userid实际上是用户在mysql中的序列号
+        std::string username = session->getValue("username"); // 这里才是实际用户名
 
         std::string reqFile("../WebApps/GomokuServer/resource/menu.html");
         FileUtil fileOperater(reqFile);
@@ -46,13 +46,13 @@ void MenuHandler::handle(const http::HttpRequest &req, http::HttpResponse *resp)
             htmlContent.insert(headEnd, script);
         }
 
-        // server_->packageResp(req.getVersion(), HttpResponse::k200Ok, "OK"
-        //             , false, "text/html", htmlContent.size(), htmlContent, resp);
-        resp->setStatusLine(req.getVersion(), http::HttpResponse::k200Ok, "OK");
-        resp->setCloseConnection(false);
-        resp->setContentType("text/html");
-        resp->setContentLength(htmlContent.size());
-        resp->setBody(htmlContent);
+        server_->packageResp(req.getVersion(), http::HttpResponse::k200Ok, "OK"
+                    , false, "text/html", htmlContent.size(), htmlContent, resp);
+        // resp->setStatusLine(req.getVersion(), http::HttpResponse::k200Ok, "OK");
+        // resp->setCloseConnection(false);
+        // resp->setContentType("text/html");
+        // resp->setContentLength(htmlContent.size());
+        // resp->setBody(htmlContent);
     }
     catch (const std::exception &e)
     {

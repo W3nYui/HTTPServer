@@ -24,7 +24,7 @@ void AiGameStartHandler::handle(const http::HttpRequest &req, http::HttpResponse
         std::lock_guard<std::mutex> lock(server_->mutexForAiGames_);
         if (server_->aiGames_.find(userId) != server_->aiGames_.end())
             server_->aiGames_.erase(userId);
-        server_->aiGames_[userId] = std::make_shared<AiGame>(userId);
+        server_->aiGames_[userId] = std::make_shared<AiGame>(userId); // 获得当前用户id的ai游戏实例
     }
 
     // 创建一个ai机器人，它就while不断地执行下棋逻辑
@@ -33,7 +33,7 @@ void AiGameStartHandler::handle(const http::HttpRequest &req, http::HttpResponse
     if (!fileOperater.isValid())
     {
         LOG_WARN << reqFile << "not exist.";
-        fileOperater.resetDefaultFile(); // FIXME:其实这里可能不必要，后续删了吧，不过其实也不会调用到毕竟详细地址是我服务端定义的
+        fileOperater.resetDefaultFile(); // 重置为默认文件 但可能不必要
     }
 
     std::vector<char> buffer(fileOperater.size());
@@ -44,5 +44,5 @@ void AiGameStartHandler::handle(const http::HttpRequest &req, http::HttpResponse
     resp->setCloseConnection(false);
     resp->setContentType("text/html");
     resp->setContentLength(htmlContent.size());
-    resp->setBody(htmlContent);
+    resp->setBody(htmlContent); // 返回对战界面
 }
