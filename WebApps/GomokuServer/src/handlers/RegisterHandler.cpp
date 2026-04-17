@@ -64,18 +64,30 @@ int RegisterHandler::insertUser(const std::string &username, const std::string &
         // mysqlUtil_.executeUpdate(sql);
         // std::string sql2 = "SELECT id FROM users WHERE username = '" + username + "'";
         // sql::ResultSet* res = mysqlUtil_.executeQuery(sql2);
+        
         // 使用预处理语句 避免SQL注入攻击
         std::string sql = "INSERT INTO users (username, password) VALUES (?, ?)";
         mysqlUtil_.executeUpdate(sql, username, password);
 
-        std::string sql2 = "SELECT id FROM users WHERE username = ?";
-        sql::ResultSet* res = mysqlUtil_.executeQuery(sql2, username);
+        // sql::ResultSet* res = mysqlUtil_.executeQuery(sql2, username);
 
-        if (res->next()) // 如果查询结果集有数据
-        {
-            return res->getInt("id");
-        } else {
+        // if (res->next()) // 如果查询结果集有数据
+        // {
+        //     return res->getInt("id");
+        // } else {
+        //     return -2; // 插入失败 返回-2
+        // }
+
+        std::string sql2 = "SELECT id FROM users WHERE username = ?";
+        sql::ResultSet* res;
+        try {
+            res = mysqlUtil_.executeQuery(sql2, username);
+        } catch (const sql::SQLException& e) {
             return -2; // 插入失败 返回-2
+        } 
+        if (res->next())
+        {
+            return res->getInt("id"); // 返回用户id 插入成功
         }
     }
     return -1; // 用户已经存在 返回-1 或者查询失败 返回-1
@@ -86,10 +98,21 @@ bool RegisterHandler::isUserExist(const std::string &username)
     // std::string sql = "SELECT id FROM users WHERE username = '" + username + "'";
     // sql::ResultSet* res = mysqlUtil_.executeQuery(sql);
     std::string sql = "SELECT id FROM users WHERE username = ?";
-    sql::ResultSet* res = mysqlUtil_.executeQuery(sql, username);
+    // sql::ResultSet* res = mysqlUtil_.executeQuery(sql, username);
+    // if (res->next())
+    // {
+    //     return true;
+    // }
+    // return false;
+    sql::ResultSet* res;
+    try {
+        res = mysqlUtil_.executeQuery(sql, username);
+    } catch (const sql::SQLException& e) {
+        return false; // 查询失败 返回false
+    } 
     if (res->next())
     {
-        return true;
+        return true; // 用户存在 返回true
     }
-    return false;
+    return false; // 用户不存在 返回false
 }
