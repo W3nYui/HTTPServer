@@ -10,15 +10,32 @@
 #include "../../../HttpServer/include/http/HttpRequest.h"
 #include "../../../HttpServer/include/http/HttpResponse.h"
 #include "../../../HttpServer/include/http/HttpServer.h"
+#include "../../../HttpServer/include/ssl/SslConfig.h"
+#include "ssl/SslTypes.h"
+
 
 using namespace http;
 // 应用层服务器 初始化 调度底层网络层
 GomokuServer::GomokuServer(int port,
                            const std::string &name,
+                           bool useSSL,
                            muduo::net::TcpServer::Option option)
-    : httpServer_(port, name, false, option), maxOnline_(0) // 这里httpServer_是muduo的HttpServer实例，用于处理HTTP请求 但是传参不匹配
+    : httpServer_(port, name, useSSL, option), maxOnline_(0) // 这里httpServer_是muduo的HttpServer实例，用于处理HTTP请求 但是传参不匹配
 {
     initialize(); // 初始化会话管理、中间件管理、路由
+    if (useSSL)
+    {
+        ssl::SslConfig sslConfig;
+        // 使用绝对路径确保在任何工作目录下都能找到证书文件
+        sslConfig.setCertificateFile("/home/w3nyui/Learning/HTTPServer/certs/server.crt");
+        sslConfig.setPrivateKeyFile("/home/w3nyui/Learning/HTTPServer/certs/server.key");
+        sslConfig.setCertificateChainFile("/home/w3nyui/Learning/HTTPServer/certs/ca.crt");
+        sslConfig.setProtocolVersion(ssl::SSLVersion::TLS_1_2);
+        sslConfig.setCipherList("HIGH:!aNULL:!MD5");
+        sslConfig.setVerifyClient(false);
+
+        httpServer_.setSslConfig(sslConfig);
+    }
 }
 
 void GomokuServer::setThreadNum(int numThreads)

@@ -67,8 +67,6 @@ void HttpServer::onConnection(const muduo::net::TcpConnectionPtr& conn)
         if (useSSL_)
         {
             auto sslConn = std::make_unique<ssl::SslConnection>(conn, sslCtx_.get());
-            sslConn->setMessageCallback(
-                std::bind(&HttpServer::onMessage, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
             sslConns_[conn] = std::move(sslConn);
             sslConns_[conn]->startHandshake();
         }
@@ -92,19 +90,16 @@ void HttpServer::onMessage(const muduo::net::TcpConnectionPtr &conn,
         // 这层判断只是代表是否支持ssl
         if (useSSL_)
         {
-            LOG_INFO << "onMessage useSSL_ is true";
             // 1.查找对应的SSL连接
             auto it = sslConns_.find(conn);
             if (it != sslConns_.end())
             {
-                LOG_INFO << "onMessage sslConns_ is not empty";
-                // 2. SSL连接处理数据
+                // 2. SSL连接处理数据（握手或解密）
                 it->second->onRead(conn, buf, receiveTime);
 
                 // 3. 如果 SSL 握手还未完成，直接返回
                 if (!it->second->isHandshakeCompleted())
                 {
-                    LOG_INFO << "onMessage sslConns_ is not empty";
                     return;
                 }
 
@@ -113,9 +108,8 @@ void HttpServer::onMessage(const muduo::net::TcpConnectionPtr &conn,
                 if (decryptedBuf->readableBytes() == 0)
                     return; // 没有解密后的数据
 
-                // 5. 使用解密后的数据进行HTTP 处理
+                // 5. 使用解密后的数据进行HTTP处理
                 buf = decryptedBuf; // 将 buf 指向解密后的数据
-                LOG_INFO << "onMessage decryptedBuf is not empty";
             }
         }
         // HttpContext对象用于解析出buf中的请求报文，并把报文的关键信息封装到HttpRequest对象中
@@ -131,6 +125,16 @@ void HttpServer::onMessage(const muduo::net::TcpConnectionPtr &conn,
         {
             onRequest(conn, context->request());
             context->reset();
+            
+            // 清空SSL解密缓冲区，避免数据累积
+            if (useSSL_)
+            {
+                auto it = sslConns_.find(conn);
+                if (it != sslConns_.end())
+                {
+                    it->second->getDecryptedBuffer()->retrieveAll();
+                }
+            }
         }
     }
     catch (const std::exception &e)
@@ -149,17 +153,29 @@ void HttpServer::onRequest(const muduo::net::TcpConnectionPtr &conn, const HttpR
                   (req.getVersion() == "HTTP/1.0" && connection != "Keep-Alive"));
     HttpResponse response(close);
 
-    // 根据请求报文信息来封装响应报文对象
-    httpCallback_(req, &response); // 执行onHttpCallback函数
+    httpCallback_(req, &response);
 
-    // 可以给response设置一个成员，判断是否请求的是文件，如果是文件设置为true，并且存在文件位置在这里send出去。
     muduo::net::Buffer buf;
     response.appendToBuffer(&buf);
-    // 打印完整的响应内容用于调试
     LOG_INFO << "Sending response:\n" << buf.toStringPiece().as_string();
 
-    conn->send(&buf);
-    // 如果是短连接的话，返回响应报文后就断开连接
+    if (useSSL_)
+    {
+        auto it = sslConns_.find(conn);
+        if (it != sslConns_.end())
+        {
+            it->second->send(buf.peek(), buf.readableBytes());
+        }
+        else
+        {
+            conn->send(&buf);
+        }
+    }
+    else
+    {
+        conn->send(&buf);
+    }
+
     if (response.closeConnection())
     {
         conn->shutdown();

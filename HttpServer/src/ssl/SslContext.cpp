@@ -1,6 +1,7 @@
 #include "../../include/ssl/SslContext.h"
 #include <muduo/base/Logging.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
 
 namespace ssl
 {
@@ -61,7 +62,6 @@ bool SslContext::initialize()
 
 bool SslContext::loadCertificates()
 {
-    // 加载证书
     if (SSL_CTX_use_certificate_file(ctx_,
      config_.getCertificateFile().c_str(), SSL_FILETYPE_PEM) <= 0)
     {
@@ -69,7 +69,6 @@ bool SslContext::loadCertificates()
         return false;
     }
 
-    // 加载私钥
     if (SSL_CTX_use_PrivateKey_file(ctx_, 
         config_.getPrivateKeyFile().c_str(), SSL_FILETYPE_PEM) <= 0)
     {
@@ -77,20 +76,18 @@ bool SslContext::loadCertificates()
         return false;
     }
 
-    // 验证私钥
     if (!SSL_CTX_check_private_key(ctx_))
     {
         handleSslError("Private key does not match the certificate");
         return false;
     }
 
-    // 加载证书链
     if (!config_.getCertificateChainFile().empty())
     {
-        if (SSL_CTX_use_certificate_chain_file(ctx_,
-            config_.getCertificateChainFile().c_str()) <= 0)
+        if (SSL_CTX_load_verify_locations(ctx_,
+            config_.getCertificateChainFile().c_str(), nullptr) <= 0)
         {
-            handleSslError("Failed to load certificate chain");
+            handleSslError("Failed to load CA certificate for verification");
             return false;
         }
     }
@@ -108,13 +105,16 @@ bool SslContext::setupProtocol()
             options |= SSL_OP_NO_TLSv1;
             break;
         case SSLVersion::TLS_1_1:
-            options |= SSL_OP_NO_TLSv1_1;
+            // options |= SSL_OP_NO_TLSv1_1;
+            options |= SSL_OP_NO_TLSv1;
             break;
         case SSLVersion::TLS_1_2:
-            options |= SSL_OP_NO_TLSv1_2;
+            // options |= SSL_OP_NO_TLSv1_2;
+            options |= SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1;
             break;
         case SSLVersion::TLS_1_3:
-            options |= SSL_OP_NO_TLSv1_3;
+            // options |= SSL_OP_NO_TLSv1_3;
+            options |= SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
             break;
     }
     SSL_CTX_set_options(ctx_, options);
