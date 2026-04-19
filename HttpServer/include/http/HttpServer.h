@@ -29,7 +29,14 @@ class HttpResponse;
 
 namespace http
 {
+/**
+ * @brief HTTP服务器类
+ * 集合了整个http服务器的链路
+ 1. muduo库控制tcp连接
+ 2. 注册客户端注册(应用层上下文)回调与fd接受回调函数到muduo库中
+ 3. 实现http数据链路：解析http应用层上下文 -> 中间件 -> 路由匹配 -> 中间件后处理 -> 返回http响应
 
+ */
 class HttpServer : muduo::noncopyable
 {
 public:
@@ -40,7 +47,7 @@ public:
                const std::string& name,
                bool useSSL = false, // 默认不使用SSL 是HTTP协议
                muduo::net::TcpServer::Option option = muduo::net::TcpServer::kNoReusePort);
-    
+    // 设置reactor的从线程数
     void setThreadNum(int numThreads)
     {
         server_.setThreadNum(numThreads);

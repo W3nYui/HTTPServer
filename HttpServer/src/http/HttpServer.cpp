@@ -19,10 +19,10 @@ HttpServer::HttpServer(int port,
                        const std::string &name,
                        bool useSSL,
                        muduo::net::TcpServer::Option option)
-    : listenAddr_(port)
-    , server_(&mainLoop_, listenAddr_, name, option)
+    : listenAddr_(port) // 注册监听端口
+    , server_(&mainLoop_, listenAddr_, name, option) // 注册muduo库的tcp服务器：reactor模式
     , useSSL_(useSSL)
-    , httpCallback_(std::bind(&HttpServer::handleRequest, this, std::placeholders::_1, std::placeholders::_2))
+    , httpCallback_(std::bind(&HttpServer::handleRequest, this, std::placeholders::_1, std::placeholders::_2)) // 注册路由匹配函数的回调函数
 {
     initialize();
 }
@@ -31,20 +31,21 @@ HttpServer::HttpServer(int port,
 void HttpServer::start()
 {
     LOG_WARN << "HttpServer[" << server_.name() << "] starts listening on" << server_.ipPort();
-    server_.start();
-    mainLoop_.loop();
+    server_.start(); // 启动tcp服务器的主循环监听客户端连接
+    mainLoop_.loop(); // 进入主循环 等待客户端连接
+    LOG_WARN << "HttpServer[" << server_.name() << "] stops listening on" << server_.ipPort();
 }
 
 void HttpServer::initialize()
 {
     // 设置回调函数
     server_.setConnectionCallback(
-        std::bind(&HttpServer::onConnection, this, std::placeholders::_1));
+        std::bind(&HttpServer::onConnection, this, std::placeholders::_1)); // 客户端连接回调函数
     server_.setMessageCallback(
         std::bind(&HttpServer::onMessage, this,
                   std::placeholders::_1,
                   std::placeholders::_2,
-                  std::placeholders::_3));
+                  std::placeholders::_3)); // 客户端消息回调函数
 }
 
 void HttpServer::setSslConfig(const ssl::SslConfig& config)
@@ -68,9 +69,9 @@ void HttpServer::onConnection(const muduo::net::TcpConnectionPtr& conn)
         {   // 对unique_ptr使用get 获得的是sslCtx_的指针 但不获取所有权 当上层(httpserver)的指针销毁时 其下层的ssl连接也会被销毁
             auto sslConn = std::make_unique<ssl::SslConnection>(conn, sslCtx_.get()); // 将TCP连接与ssl上下文传入ssl连接中
             sslConns_[conn] = std::move(sslConn);
-            sslConns_[conn]->startHandshake();
+            sslConns_[conn]->startHandshake(); // 设定该conn对应的ssl连接模式
         }
-        conn->setContext(HttpContext());
+        conn->setContext(HttpContext()); // 设置muduo库 在其中传入一个HttpContext对象 用来管理http数据解析的状态机
     }
     else 
     {
@@ -80,7 +81,13 @@ void HttpServer::onConnection(const muduo::net::TcpConnectionPtr& conn)
         }
     }
 }
-
+/**
+ * @brief 客户端消息回调函数
+ 当客户端数据到达，进行数据解析 解析应用层http协议
+ * @param conn 客户端连接
+ * @param buf 客户端发送的消息缓冲区
+ * @param receiveTime 客户端发送消息的时间
+ */
 void HttpServer::onMessage(const muduo::net::TcpConnectionPtr &conn,
                            muduo::net::Buffer *buf,
                            muduo::Timestamp receiveTime)
@@ -113,18 +120,19 @@ void HttpServer::onMessage(const muduo::net::TcpConnectionPtr &conn,
             }
         }
         // HttpContext对象用于解析出buf中的请求报文，并把报文的关键信息封装到HttpRequest对象中
+        // 这里获取的是conn内的HttpContext对象 因此用指针来操作 其中管理了一个http的上下文状态
         HttpContext *context = boost::any_cast<HttpContext>(conn->getMutableContext());
-        if (!context->parseRequest(buf, receiveTime)) // 解析一个http请求
+        if (!context->parseRequest(buf, receiveTime)) // 解析一个http请求 并存储到httpcontext中的request对象中
         {
             // 如果解析http报文过程中出错
             conn->send("HTTP/1.1 400 Bad Request\r\n\r\n");
             conn->shutdown();
         }
-        // 如果buf缓冲区中解析出一个完整的数据包才封装响应报文
+        // 如果buf缓冲区中解析出一个完整的数据包才封装响应报文 完全解析才会封装 否则等待下一次的数据到达 进行封装
         if (context->gotAll())
         {
-            onRequest(conn, context->request());
-            context->reset();
+            onRequest(conn, context->request()); // 执行响应函数
+            context->reset(); // 重置http请求的上下文状态 以及保存的http请求数据
             
             // 清空SSL解密缓冲区，避免数据累积
             if (useSSL_)
@@ -149,9 +157,9 @@ void HttpServer::onMessage(const muduo::net::TcpConnectionPtr &conn,
 void HttpServer::onRequest(const muduo::net::TcpConnectionPtr &conn, const HttpRequest &req)
 {
     const std::string &connection = req.getHeader("Connection");
-    bool close = ((connection == "close") ||
+    bool checkClose = ((connection == "close") ||
                   (req.getVersion() == "HTTP/1.0" && connection != "Keep-Alive"));
-    HttpResponse response(close);
+    HttpResponse response(checkClose);
 
     httpCallback_(req, &response);
 

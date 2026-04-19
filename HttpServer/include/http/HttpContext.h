@@ -8,7 +8,7 @@
 
 namespace http
 {
-
+// http协议上下文 用于管理、读取一组http请求数据
 class HttpContext 
 {
 public:
@@ -28,6 +28,7 @@ public:
     bool gotAll() const 
     { return state_ == kGotAll;  }
 
+    // 重置http请求的上下文状态 以及保存的http请求数据
     void reset()
     {
         state_ = kExpectRequestLine;

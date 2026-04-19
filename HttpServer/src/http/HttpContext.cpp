@@ -13,9 +13,9 @@ bool HttpContext::parseRequest(Buffer *buf, Timestamp receiveTime)
     bool hasMore = true;
     while (hasMore)
     {
-        if (state_ == kExpectRequestLine)
+        if (state_ == kExpectRequestLine) // 请求行 包括请求方法、请求路径、HTTP版本号
         {
-            const char *crlf = buf->findCRLF(); // 注意这个返回值边界可能有错
+            const char *crlf = buf->findCRLF(); // 查找CRLF分隔符 即请求行数据 可能会出现边界错误
             if (crlf)
             {
                 ok = processRequestLine(buf->peek(), crlf);
@@ -94,7 +94,7 @@ bool HttpContext::parseRequest(Buffer *buf, Timestamp receiveTime)
         }
         else if (state_ == kExpectBody)
         {
-            // 检查缓冲区中是否有足够的数据
+            // 检查缓冲区中是否有足够的数据 等待足够的数据到达 才会写入请求体中
             if (buf->readableBytes() < request_.contentLength())
             {
                 hasMore = false; // 数据不完整，等待更多数据
@@ -120,25 +120,26 @@ bool HttpContext::processRequestLine(const char *begin, const char *end)
 {
     bool succeed = false;
     const char *start = begin;
-    const char *space = std::find(start, end, ' ');
-    if (space != end && request_.setMethod(start, space))
+    const char *space = std::find(start, end, ' '); // 查找请求方法结束位置
+    if (space != end && request_.setMethod(start, space)) // 解析整个请求行数据 并设置请求方法
     {
-        start = space + 1;
-        space = std::find(start, end, ' ');
+        start = space + 1; // 设置请求路径开始位置为请求方法后一个空格
+        space = std::find(start, end, ' '); // 查找请求路径结束位置
         if (space != end)
         {
-            const char *argumentStart = std::find(start, space, '?');
+            const char *argumentStart = std::find(start, space, '?'); // 查找请求路径是否带参数
             if (argumentStart != space) // 请求带参数
             {
                 request_.setPath(start, argumentStart); // 注意这些返回值边界
-                request_.setQueryParameters(argumentStart + 1, space);
+                request_.setQueryParameters(argumentStart + 1, space); // 处理请求路径参数
             }
             else // 请求不带参数
             {
                 request_.setPath(start, space);
             }
 
-            start = space + 1;
+            start = space + 1; // 设置HTTP版本号开始位置为请求路径后一个空格
+            // 检查HTTP版本号是否正确 是否为HTTP/1.0或HTTP/1.1
             succeed = ((end - start == 8) && std::equal(start, end - 1, "HTTP/1."));
             if (succeed)
             {
