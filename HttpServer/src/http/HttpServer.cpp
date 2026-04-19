@@ -51,8 +51,8 @@ void HttpServer::setSslConfig(const ssl::SslConfig& config)
 {
     if (useSSL_)
     {
-        sslCtx_ = std::make_unique<ssl::SslContext>(config);
-        if (!sslCtx_->initialize())
+        sslCtx_ = std::make_unique<ssl::SslContext>(config); // 将config注册到sslCtx_中
+        if (!sslCtx_->initialize()) // 初始化ssl上下文
         {
             LOG_ERROR << "Failed to initialize SSL context";
             abort();
@@ -64,9 +64,9 @@ void HttpServer::onConnection(const muduo::net::TcpConnectionPtr& conn)
 {
     if (conn->connected())
     {
-        if (useSSL_)
-        {
-            auto sslConn = std::make_unique<ssl::SslConnection>(conn, sslCtx_.get());
+        if (useSSL_) // 创建一个ssl连接
+        {   // 对unique_ptr使用get 获得的是sslCtx_的指针 但不获取所有权 当上层(httpserver)的指针销毁时 其下层的ssl连接也会被销毁
+            auto sslConn = std::make_unique<ssl::SslConnection>(conn, sslCtx_.get()); // 将TCP连接与ssl上下文传入ssl连接中
             sslConns_[conn] = std::move(sslConn);
             sslConns_[conn]->startHandshake();
         }

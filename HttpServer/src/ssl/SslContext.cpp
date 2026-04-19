@@ -35,13 +35,13 @@ bool SslContext::initialize()
         return false;
     }
 
-    // 设置 SSL 选项
+    // 设置 SSL 选项 这里设置禁用 SSLv2、SSLv3、压缩，并让服务器优先选择加密套件
     long options = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | 
                   SSL_OP_NO_COMPRESSION |
                   SSL_OP_CIPHER_SERVER_PREFERENCE;
     SSL_CTX_set_options(ctx_, options);
 
-    // 加载证书和私钥
+    // 加载证书和私钥 将config_中的证书和私钥加载到ssl上下文ctx_中
     if (!loadCertificates())
     {
         return false;
@@ -95,6 +95,7 @@ bool SslContext::loadCertificates()
     return true;
 }
 
+// 选择最低协议版本
 bool SslContext::setupProtocol()
 {
     // 设置 SSL/TLS 协议版本
@@ -102,7 +103,7 @@ bool SslContext::setupProtocol()
     switch (config_.getProtocolVersion())
     {
         case SSLVersion::TLS_1_0:
-            options |= SSL_OP_NO_TLSv1;
+            // options |= SSL_OP_NO_TLSv1;
             break;
         case SSLVersion::TLS_1_1:
             // options |= SSL_OP_NO_TLSv1_1;

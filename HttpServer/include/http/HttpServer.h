@@ -130,7 +130,7 @@ private:
     
 private:
     muduo::net::InetAddress                      listenAddr_; // 监听地址
-    muduo::net::TcpServer                        server_; 
+    muduo::net::TcpServer                        server_; // TCP服务器
     muduo::net::EventLoop                        mainLoop_; // 主循环
     HttpCallback                                 httpCallback_; // 回调函数
     router::Router                               router_; // 路由
@@ -138,8 +138,8 @@ private:
     middleware::MiddlewareChain                  middlewareChain_; // 中间件链
     std::unique_ptr<ssl::SslContext>             sslCtx_; // SSL 上下文
     bool                                         useSSL_; // 是否使用 SSL   
-    // TcpConnectionPtr -> SslConnectionPtr 
-    std::map<muduo::net::TcpConnectionPtr, std::unique_ptr<ssl::SslConnection>> sslConns_;
+    // TcpConnectionPtr -> SslConnectionPtr 映射 用于存储每个连接的SSL连接 及其上下文
+    std::unordered_map<muduo::net::TcpConnectionPtr, std::unique_ptr<ssl::SslConnection>> sslConns_;
 }; 
 
 } // namespace http

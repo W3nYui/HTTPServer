@@ -8,7 +8,7 @@ SslConfig::SslConfig()
     , verifyClient_(false)
     , verifyDepth_(4)
     , sessionTimeout_(300)
-    , sessionCacheSize_(20480L)
+    , sessionCacheSize_(20480L) // 分配20480字节的缓存空间
 {
 }
 

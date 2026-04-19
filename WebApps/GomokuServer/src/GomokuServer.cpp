@@ -34,7 +34,7 @@ GomokuServer::GomokuServer(int port,
         sslConfig.setCipherList("HIGH:!aNULL:!MD5");
         sslConfig.setVerifyClient(false);
 
-        httpServer_.setSslConfig(sslConfig);
+        httpServer_.setSslConfig(sslConfig); // 给httpserver设置公共的ssl配置 用于所有连接的ssl连接
     }
 }
 

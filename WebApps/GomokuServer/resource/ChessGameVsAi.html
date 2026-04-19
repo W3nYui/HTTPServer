@@ -371,46 +371,48 @@
 
             // 清理游戏状态
             gameState.reset();
+            // 直接跳转到菜单页面
+            window.location.href = '/menu';
 
-            fetch('/menu', {
-                method: 'GET',
-                headers: {
-                    'Accept': 'text/html'
-                }
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('返回菜单失败');
-                    }
-                    return response.text();
-                })
-                .then(html => {
-                    // 使用 document.open/write/close 完全重置页面
-                    document.open();
-                    document.write(html);
-                    document.close();
+            // fetch('/menu', {
+            //     method: 'GET',
+            //     headers: {
+            //         'Accept': 'text/html'
+            //     }
+            // })
+            //     .then(response => {
+            //         if (!response.ok) {
+            //             throw new Error('返回菜单失败');
+            //         }
+            //         return response.text();
+            //     })
+            //     .then(html => {
+            //         // 使用 document.open/write/close 完全重置页面
+            //         document.open();
+            //         document.write(html);
+            //         document.close();
 
-                    // 确保在页面加载完成后重新绑定事件
-                    if (document.readyState === 'loading') {
-                        document.addEventListener('DOMContentLoaded', function () {
-                            const playAiButton = document.getElementById('play-ai');
-                            if (playAiButton) {
-                                playAiButton.addEventListener('click', startAiGame);
-                            }
-                        });
-                    } else {
-                        const playAiButton = document.getElementById('play-ai');
-                        if (playAiButton) {
-                            playAiButton.addEventListener('click', startAiGame);
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('返回菜单失败，请重试！');
-                    // 恢复游戏界面
-                    location.reload();
-                });
+            //         // 确保在页面加载完成后重新绑定事件
+            //         if (document.readyState === 'loading') {
+            //             document.addEventListener('DOMContentLoaded', function () {
+            //                 const playAiButton = document.getElementById('play-ai');
+            //                 if (playAiButton) {
+            //                     playAiButton.addEventListener('click', startAiGame);
+            //                 }
+            //             });
+            //         } else {
+            //             const playAiButton = document.getElementById('play-ai');
+            //             if (playAiButton) {
+            //                 playAiButton.addEventListener('click', startAiGame);
+            //             }
+            //         }
+            //     })
+            //     .catch(error => {
+            //         console.error('Error:', error);
+            //         alert('返回菜单失败，请重试！');
+            //         // 恢复游戏界面
+            //         location.reload();
+            //     });
         }
 
         // 添加必要的加载状态样式

@@ -20,7 +20,7 @@ SslConnection::SslConnection(const TcpConnectionPtr& conn, SslContext* ctx)
         return;
     }
     
-    // 创建SSL对象，基于SslContext的配置
+    // 创建SSL对象，基于SslContext的配置初始化一个SSL对象
     ssl_ = SSL_new(ctx_->getNativeHandle());
     if (!ssl_) {
         LOG_ERROR << "Failed to create SSL object";
@@ -60,8 +60,8 @@ SslConnection::~SslConnection()
 // 开始SSL握手过程
 void SslConnection::startHandshake() 
 {
-    SSL_set_accept_state(ssl_);
-    handleHandshake();
+    SSL_set_accept_state(ssl_); // 设置为服务器模式（接受SSL连接）
+    // handleHandshake(); // 由于客户端还没有发送数据，所以这里不执行握手，等客户端发送数据后再执行
 }
 
 // 处理TCP连接上的读事件
@@ -78,7 +78,7 @@ void SslConnection::onRead(const TcpConnectionPtr& conn, BufferPtr buf,
     
     // 握手阶段处理
     if (state_ == SSLState::HANDSHAKE) {
-        // 将TCP接收到的数据写入readBio，供SSL_do_handshake使用
+        // 将TCP接收到的数据写入readBio，供SSL_do_handshake使用 因为ssl握手是将客户端发送的数据加密后返回
         if (buf->readableBytes() > 0) {
             BIO_write(readBio_, buf->peek(), buf->readableBytes());
             buf->retrieve(buf->readableBytes());
@@ -152,20 +152,24 @@ void SslConnection::send(const void* data, size_t len)
 // 握手成功后状态变为ESTABLISHED
 void SslConnection::handleHandshake() 
 {
+    // 执行一次SSL握手
     int ret = SSL_do_handshake(ssl_);
+    cntHandshake_++;
+    LOG_INFO << "SSL handshake cur attempt " << cntHandshake_;
     
     // 将握手响应数据从writeBio发送到TCP
     flushWriteBio();
-    
+    // 握手成功后状态变为ESTABLISHED
     if (ret == 1) {
         state_ = SSLState::ESTABLISHED;
         LOG_INFO << "SSL handshake completed successfully";
         LOG_INFO << "Using cipher: " << SSL_get_cipher(ssl_);
         LOG_INFO << "Protocol version: " << SSL_get_version(ssl_);
         
-        if (!messageCallback_) {
-            LOG_WARN << "No message callback set after SSL handshake";
-        }
+        // ssl的数据是在httpserver的onMessage中利用decryptedBuffer_进行获取的 不需要回调 可以改进成回调 直接注入httpserver
+        // if (!messageCallback_) {
+        //     LOG_WARN << "No message callback set after SSL handshake";
+        // }
         return;
     }
     

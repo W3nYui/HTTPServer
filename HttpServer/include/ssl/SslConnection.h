@@ -42,6 +42,7 @@ private:
     BIO*                writeBio_;
     muduo::net::Buffer  decryptedBuffer_;
     MessageCallback     messageCallback_;
+    int                 cntHandshake_ = 0;
 };
 
 } // namespace ssl
