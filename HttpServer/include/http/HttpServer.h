@@ -21,6 +21,7 @@
 #include "../session/SessionManager.h"
 #include "../middleware/MiddlewareChain.h"
 #include "../middleware/cors/CorsMiddleware.h"
+#include "../middleware/ratelimiter/RateLimiterMiddleware.h"
 #include "../ssl/SslConnection.h"
 #include "../ssl/SslContext.h"
 

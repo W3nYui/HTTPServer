@@ -22,6 +22,8 @@ public:
         k403Forbidden = 403, // 无权访问该网页资源
         k404NotFound = 404, // 未找到该网页资源
         k409Conflict = 409, // 冲突
+        k429TooManyRequests = 429, // 过多请求
+        k408RequestTimeout = 408, // 请求超时
         k500InternalServerError = 500, // 服务器内部错误
     };
 
@@ -69,6 +71,7 @@ public:
     void setErrorHeader(){}
 
     void appendToBuffer(muduo::net::Buffer* outputBuf) const;
+
 private:
     std::string                        httpVersion_; 
     HttpStatusCode                     statusCode_;

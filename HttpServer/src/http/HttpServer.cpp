@@ -1,4 +1,5 @@
 #include "../../include/http/HttpServer.h"
+#include "http/HttpRequest.h"
 
 #include <any>
 #include <functional>
@@ -161,12 +162,15 @@ void HttpServer::onMessage(const muduo::net::TcpConnectionPtr &conn,
  */
 void HttpServer::onRequest(const muduo::net::TcpConnectionPtr &conn, const HttpRequest &req)
 {
-    const std::string &connection = req.getHeader("Connection");
+    HttpRequest mutableReq = req; // 设置客户端IP地址
+    mutableReq.setClientIP(conn->peerAddress().toIp());
+
+    const std::string &connection = mutableReq.getHeader("Connection");
     bool checkClose = ((connection == "close") || // 如果有Connection头 且值为close 则关闭连接
-                  (req.getVersion() == "HTTP/1.0" && connection != "Keep-Alive"));
+                  (mutableReq.getVersion() == "HTTP/1.0" && connection != "Keep-Alive"));
     HttpResponse response(checkClose); // 设置响应
 
-    httpCallback_(req, &response);
+    httpCallback_(mutableReq, &response);
 
     muduo::net::Buffer buf;
     response.appendToBuffer(&buf);

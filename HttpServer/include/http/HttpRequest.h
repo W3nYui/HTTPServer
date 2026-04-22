@@ -73,6 +73,12 @@ public:
     { return contentLength_; }
 
     void swap(HttpRequest& that);
+    
+    std::string getClientIP() const
+    { return clientIP_; }
+
+    void setClientIP(const std::string& ip)
+    { clientIP_ = ip; }
 
 private:
     Method                                       method_; // 请求方法
@@ -84,6 +90,7 @@ private:
     std::map<std::string, std::string>           headers_; // 请求头
     std::string                                  content_; // 请求体
     uint64_t                                     contentLength_ { 0 }; // 请求体长度
+    std::string                                  clientIP_; // 客户端IP
 };  
 
 } // namespace http

@@ -76,8 +76,11 @@ void GomokuServer::initializeMiddleware()
 {
     // 创建中间件
     auto corsMiddleware = std::make_shared<http::middleware::CorsMiddleware>();
+    // 限流中间件 这里用默认配置
+    auto rateLimiterMiddleware = std::make_shared<http::middleware::RateLimiterMiddleware>(http::middleware::RateLimiterConfig::defaultConfig());
     // 添加中间件
     httpServer_.addMiddleware(corsMiddleware);
+    httpServer_.addMiddleware(rateLimiterMiddleware);
 }
 
 /**
@@ -115,6 +118,14 @@ void GomokuServer::initializeRouter()
     // 后台数据获取
     httpServer_.Get("/backend_data", [this](const http::HttpRequest& req, http::HttpResponse* resp) {
         getBackendData(req, resp);
+    });
+    // 直接返回测试信息 用于测试限流中间件
+    httpServer_.Get("/api/test", [](const http::HttpRequest& req, http::HttpResponse* resp) {
+        resp->setStatusCode(http::HttpResponse::k200Ok);
+        resp->setStatusMessage("OK");
+        resp->setContentType("application/json");
+        std::string body = R"({"status": "ok", "message": "Test endpoint"})";
+        resp->setBody(body);
     });
 }
 
