@@ -35,7 +35,7 @@ bool HttpContext::parseRequest(Buffer *buf, Timestamp receiveTime)
                 hasMore = false;
             }
         }
-        else if (state_ == kExpectHeaders)
+        else if (state_ == kExpectHeaders) // 解析请求头
         {
             const char *crlf = buf->findCRLF();
             if (crlf)
@@ -52,7 +52,7 @@ bool HttpContext::parseRequest(Buffer *buf, Timestamp receiveTime)
                     if (request_.method() == HttpRequest::kPost || 
                         request_.method() == HttpRequest::kPut)
                     {
-                        std::string contentLength = request_.getHeader("Content-Length");
+                        std::string contentLength = request_.getHeader("Content-Length"); // 查询有没有Content-Length头
                         if (!contentLength.empty())
                         {
                             request_.setContentLength(std::stoi(contentLength));

@@ -4,7 +4,10 @@
 
 namespace http
 {
-
+/**
+ * @brief HttpResponse类
+ * 用于表示http响应
+ */
 class HttpResponse 
 {
 public:

@@ -153,13 +153,18 @@ void HttpServer::onMessage(const muduo::net::TcpConnectionPtr &conn,
         conn->shutdown();
     }
 }
-
+/**
+ * @brief 客户端请求回调函数
+ * 当客户端发送http请求时，调用该函数
+ * @param conn 客户端连接
+ * @param req 客户端发送的http请求
+ */
 void HttpServer::onRequest(const muduo::net::TcpConnectionPtr &conn, const HttpRequest &req)
 {
     const std::string &connection = req.getHeader("Connection");
-    bool checkClose = ((connection == "close") ||
+    bool checkClose = ((connection == "close") || // 如果有Connection头 且值为close 则关闭连接
                   (req.getVersion() == "HTTP/1.0" && connection != "Keep-Alive"));
-    HttpResponse response(checkClose);
+    HttpResponse response(checkClose); // 设置响应
 
     httpCallback_(req, &response);
 
@@ -167,6 +172,7 @@ void HttpServer::onRequest(const muduo::net::TcpConnectionPtr &conn, const HttpR
     response.appendToBuffer(&buf);
     LOG_INFO << "Sending response:\n" << buf.toStringPiece().as_string();
 
+    // ssl加密发送响应 或 普通发送响应
     if (useSSL_)
     {
         auto it = sslConns_.find(conn);
@@ -212,7 +218,7 @@ void HttpServer::handleRequest(const HttpRequest &req, HttpResponse *resp)
         // 处理响应后的中间件
         middlewareChain_.processAfter(*resp);
     }
-    catch (const HttpResponse& res) 
+    catch (const HttpResponse& res) // 抛出响应对象 则直接返回响应
     {
         // 处理中间件抛出的响应（如CORS预检请求）
         *resp = res;
