@@ -16,7 +16,7 @@ namespace middleware {
 
 class RateLimiterMiddleware : public Middleware {
 public:
-    explicit RateLimiterMiddleware(const RateLimiterConfig& config);
+    explicit RateLimiterMiddleware(const RateLimiterConfig& config = RateLimiterConfig::defaultConfig());
     
     void before(HttpRequest& request) override;
     void after(HttpResponse& response) override;

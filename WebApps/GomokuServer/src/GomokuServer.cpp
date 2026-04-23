@@ -77,10 +77,14 @@ void GomokuServer::initializeMiddleware()
     // 创建中间件
     auto corsMiddleware = std::make_shared<http::middleware::CorsMiddleware>();
     // 限流中间件 这里用默认配置
-    auto rateLimiterMiddleware = std::make_shared<http::middleware::RateLimiterMiddleware>(http::middleware::RateLimiterConfig::defaultConfig());
-    // 添加中间件
-    httpServer_.addMiddleware(corsMiddleware);
+    auto rateLimiterMiddleware = std::make_shared<http::middleware::RateLimiterMiddleware>();
+    // 日志中间件
+    auto loggingMiddleware = std::make_shared<http::middleware::RequestLoggingMiddleware>();
+    // 添加中间件 先添加日志中间件 再添加限流中间件 最后添加cors中间件 因为cors中间件只用于检查请求段
+    httpServer_.addMiddleware(loggingMiddleware);
     httpServer_.addMiddleware(rateLimiterMiddleware);
+    httpServer_.addMiddleware(corsMiddleware);
+    
 }
 
 /**

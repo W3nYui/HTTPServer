@@ -10,10 +10,11 @@ void HttpResponse::appendToBuffer(muduo::net::Buffer* outputBuf) const
     // 为什么不把状态信息放入格式化字符串中，因为状态信息有长有短，不方便定义一个固定大小的内存存储
     snprintf(buf, sizeof buf, "%s %d ", httpVersion_.c_str(), statusCode_);
     
-    outputBuf->append(buf);
+    outputBuf->append(buf); // 插入状态行
     outputBuf->append(statusMessage_);
-    outputBuf->append("\r\n");
+    outputBuf->append("\r\n"); // 换行 状态行结束
 
+    // 插入响应头
     if (closeConnection_) // 思考一下这些地方是不是可以直接移入近headers_中
     {
         outputBuf->append("Connection: close\r\n");
@@ -32,9 +33,9 @@ void HttpResponse::appendToBuffer(muduo::net::Buffer* outputBuf) const
         outputBuf->append(header.second);
         outputBuf->append("\r\n");
     }
-    outputBuf->append("\r\n");
+    outputBuf->append("\r\n"); // 空行 响应头结束
     
-    outputBuf->append(body_);
+    outputBuf->append(body_); // 插入响应体
 }
 
 void HttpResponse::setStatusLine(const std::string& version,

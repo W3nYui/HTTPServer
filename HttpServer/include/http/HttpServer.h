@@ -22,6 +22,7 @@
 #include "../middleware/MiddlewareChain.h"
 #include "../middleware/cors/CorsMiddleware.h"
 #include "../middleware/ratelimiter/RateLimiterMiddleware.h"
+#include "../middleware/logging/RequestLoggingMiddleware.h"
 #include "../ssl/SslConnection.h"
 #include "../ssl/SslContext.h"
 
