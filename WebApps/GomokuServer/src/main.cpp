@@ -4,7 +4,7 @@
 #include <muduo/base/Logging.h>
 #include <muduo/net/EventLoop.h>
 
-#include "GomokuServer.h"
+#include "../include/GomokuServer.h"
 
 int main(int argc, char* argv[])
 {

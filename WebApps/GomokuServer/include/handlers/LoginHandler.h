@@ -1,8 +1,8 @@
 #pragma once
 #include "../../../../HttpServer/include/router/RouterHandler.h"
-#include "../../../HttpServer/include/utils/MysqlUtil.h"
+#include "../../../..//HttpServer/include/utils/MysqlUtil.h"
 #include "../GomokuServer.h"
-#include "../../../HttpServer/include/utils/JsonUtil.h"
+#include "../../../../HttpServer/include/utils/JsonUtil.h"
 
 
 class LoginHandler : public http::router::RouterHandler 

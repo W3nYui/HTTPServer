@@ -11,7 +11,8 @@
 #include "../../../HttpServer/include/http/HttpResponse.h"
 #include "../../../HttpServer/include/http/HttpServer.h"
 #include "../../../HttpServer/include/ssl/SslConfig.h"
-#include "ssl/SslTypes.h"
+#include "../../../HttpServer/include/ssl/SslTypes.h"
+
 
 
 using namespace http;

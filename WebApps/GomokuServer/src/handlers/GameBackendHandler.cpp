@@ -1,4 +1,4 @@
-#include "../include/handlers/GameBackendHandler.h"
+#include "../../include/handlers/GameBackendHandler.h"
 
 void GameBackendHandler::handle(const http::HttpRequest& req, http::HttpResponse* resp)
 {

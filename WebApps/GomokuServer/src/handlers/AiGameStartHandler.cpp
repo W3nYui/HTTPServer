@@ -1,4 +1,4 @@
-#include "../include/handlers/AiGameStartHandler.h"
+#include "../../include/handlers/AiGameStartHandler.h"
 
 void AiGameStartHandler::handle(const http::HttpRequest &req, http::HttpResponse *resp)
 {

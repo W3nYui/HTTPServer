@@ -1,13 +1,16 @@
 #pragma once
+
 #include "../../../../HttpServer/include/router/RouterHandler.h"
 #include "../GomokuServer.h"
-#include "../../../../HttpServer/include/utils/JsonUtil.h"
 
-class LogoutHandler : public http::router::RouterHandler 
+class MatchHandler : public http::router::RouterHandler
 {
 public:
-    explicit LogoutHandler(GomokuServer* server) : server_(server) {}
+    explicit MatchHandler(GomokuServer* server, bool isJoin) : server_(server), isJoin_(isJoin) {}
+
     void handle(const http::HttpRequest& req, http::HttpResponse* resp) override;
+
 private:
     GomokuServer* server_;
+    bool isJoin_;
 };

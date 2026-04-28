@@ -1,6 +1,6 @@
 #pragma once
 #include "../../../../HttpServer/include/router/RouterHandler.h"
-#include "../../../HttpServer/include/utils/MysqlUtil.h"
+#include "../../../../HttpServer/include/utils/MysqlUtil.h"
 #include "../GomokuServer.h"
 
 class RegisterHandler : public http::router::RouterHandler 

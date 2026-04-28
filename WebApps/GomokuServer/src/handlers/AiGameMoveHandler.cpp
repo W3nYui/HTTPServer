@@ -1,4 +1,4 @@
-#include "../include/handlers/AiGameMoveHandler.h"
+#include "../../include/handlers/AiGameMoveHandler.h"
 
 void AiGameMoveHandler::handle(const http::HttpRequest &req, http::HttpResponse *resp)
 {

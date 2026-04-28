@@ -1,4 +1,4 @@
-#include "../include/handlers/EntryHandler.h"
+#include "../../include/handlers/EntryHandler.h"
 
 void EntryHandler::handle(const http::HttpRequest& req, http::HttpResponse* resp)
 {

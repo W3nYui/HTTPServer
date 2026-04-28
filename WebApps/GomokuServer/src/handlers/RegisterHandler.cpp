@@ -1,4 +1,4 @@
-#include "../include/handlers/RegisterHandler.h"
+#include "../../include/handlers/RegisterHandler.h"
 #include <cppconn/resultset.h>
 
 void RegisterHandler::handle(const http::HttpRequest& req, http::HttpResponse* resp)
