@@ -1,4 +1,5 @@
 #include "../../include/handlers/LogoutHandler.h"
+#include "../../include/handlers/GameWsHandler.h"
 
 void LogoutHandler::handle(const http::HttpRequest &req, http::HttpResponse *resp)
 {
@@ -40,7 +41,43 @@ void LogoutHandler::handle(const http::HttpRequest &req, http::HttpResponse *res
         }
         else if (gameType == GomokuServer::MAN_VS_MAN)
         {
-            // 释放相应创造资源，并且通知另一个用户对方已经主动退出游戏
+            // 释放 PVP 对局资源，通知对手对方已退出
+            int roomId = server_->getRoomByUserId(userId);
+            if (roomId > 0)
+            {
+                auto room = server_->getGameRoom(roomId);
+                if (room)
+                {
+                    int opponentId = room->getOpponent(userId);
+                    room->forfeit(opponentId);
+
+                    // 通过 WebSocket 通知对手
+                    auto wsHandler = server_->wsHandler_;
+                    if (wsHandler)
+                    {
+                        auto oppConn = wsHandler->getConnectionByUserId(opponentId);
+                        if (oppConn && oppConn->connected())
+                        {
+                            json gameOver;
+                            gameOver["type"] = "game_over";
+                            gameOver["winner"] = opponentId;
+                            gameOver["reason"] = "opponent_left";
+                            gameOver["message"] = "对手已退出游戏，你获胜了！";
+                            auto& wsServer = server_->getHttpServer().getWsServer();
+                            wsServer.sendMessage(oppConn, gameOver.dump());
+
+                            // 将对手移回大厅
+                            server_->getChatManager().addToLobby(opponentId, oppConn);
+                        }
+                    }
+                }
+                server_->removeGameRoom(roomId);
+            }
+
+            // 从匹配池移除
+            server_->getMatchmakingPool().leaveQueue(userId);
+            // 从大厅聊天移除
+            server_->getChatManager().removeFromLobby(userId);
         }
 
         // 返回响应报文

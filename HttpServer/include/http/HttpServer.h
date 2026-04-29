@@ -25,6 +25,7 @@
 #include "../middleware/logging/RequestLoggingMiddleware.h"
 #include "../ssl/SslConnection.h"
 #include "../ssl/SslContext.h"
+#include "../websocket/WebSocketServer.h"
 
 class HttpRequest;
 class HttpResponse;
@@ -126,6 +127,23 @@ public:
 
     void setSslConfig(const ssl::SslConfig& config);
 
+    /**
+     * @brief 获取 WebSocket 服务器实例
+     * 用于在业务层注册 WebSocket handler 和发送消息
+     */
+    websocket::WebSocketServer& getWsServer()
+    {
+        return wsServer_;
+    }
+
+    /**
+     * @brief 判断指定连接是否已升级为 WebSocket 连接
+     */
+    bool isWebSocketConnection(const muduo::net::TcpConnectionPtr& conn) const
+    {
+        return wsServer_.isWebSocket(conn);
+    }
+
 private:
     void initialize();
 
@@ -146,9 +164,11 @@ private:
     std::unique_ptr<session::SessionManager>     sessionManager_; // 会话管理器
     middleware::MiddlewareChain                  middlewareChain_; // 中间件链
     std::unique_ptr<ssl::SslContext>             sslCtx_; // SSL 上下文
-    bool                                         useSSL_; // 是否使用 SSL   
+    bool                                         useSSL_; // 是否使用 SSL
     // TcpConnectionPtr -> SslConnectionPtr 映射 用于存储每个连接的SSL连接 及其上下文
     std::unordered_map<muduo::net::TcpConnectionPtr, std::unique_ptr<ssl::SslConnection>> sslConns_;
+    // WebSocket 服务器 管理所有 WebSocket 连接的升级、消息收发与关闭
+    websocket::WebSocketServer                   wsServer_;
 }; 
 
 } // namespace http

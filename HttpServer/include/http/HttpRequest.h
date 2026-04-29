@@ -80,6 +80,12 @@ public:
     void setClientIP(const std::string& ip)
     { clientIP_ = ip; }
 
+    /**
+     * @brief 设置/获取 TCP 连接指针（用于 WebSocket 升级等需要原始连接的场景）
+     */
+    void setConnectionPtr(const void* ptr) { connectionPtr_ = ptr; }
+    const void* getConnectionPtr() const { return connectionPtr_; }
+
 private:
     Method                                       method_; // 请求方法
     std::string                                  version_; // http版本
@@ -91,6 +97,7 @@ private:
     std::string                                  content_; // 请求体
     uint64_t                                     contentLength_ { 0 }; // 请求体长度
     std::string                                  clientIP_; // 客户端IP
+    const void*                                  connectionPtr_ { nullptr }; // TCP连接指针 用于WebSocket升级
 };  
 
 } // namespace http

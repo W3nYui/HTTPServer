@@ -123,7 +123,7 @@
     <div id="success-alert">提示信息</div>
 
     <!-- 精美标题 -->
-    <h1 class="title">卡码五子棋</h1>
+    <h1 class="title">五子棋</h1>
 
     <!-- 登录界面 -->
     <div class="container" id="login-container">
@@ -221,6 +221,7 @@
                 .then(data => {
                     if (data && data.userId) {
                         sessionStorage.setItem('userId', data.userId);
+                        sessionStorage.setItem('username', data.username || ('User' + data.userId));
                         showAlert('登录成功！');
                         // 使用重定向而不是fetch
                         window.location.href = '/menu';

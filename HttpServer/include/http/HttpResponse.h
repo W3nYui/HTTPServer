@@ -14,6 +14,7 @@ public:
     enum HttpStatusCode
     {
         kUnknown,
+        k101SwitchingProtocols = 101, // WebSocket 协议升级
         k200Ok = 200, // 成功
         k204NoContent = 204, // 无内容
         k301MovedPermanently = 301, // 永久重定向

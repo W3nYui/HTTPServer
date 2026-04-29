@@ -6,7 +6,9 @@
 #include "../include/handlers/LogoutHandler.h"
 #include "../include/handlers/AiGameMoveHandler.h"
 #include "../include/handlers/GameBackendHandler.h"
+#include "../include/handlers/GameWsHandler.h"
 #include "../include/GomokuServer.h"
+#include "../include/GameRoom.h"
 #include "../../../HttpServer/include/http/HttpRequest.h"
 #include "../../../HttpServer/include/http/HttpResponse.h"
 #include "../../../HttpServer/include/http/HttpServer.h"
@@ -132,6 +134,106 @@ void GomokuServer::initializeRouter()
         std::string body = R"({"status": "ok", "message": "Test endpoint"})";
         resp->setBody(body);
     });
+
+    // WebSocket 升级端点（处理 PVP 匹配、落子、聊天等所有实时通信）
+    wsHandler_ = std::make_shared<GameWsHandler>(this);
+    httpServer_.Get("/ws", wsHandler_);
+
+    // PVP 对战页面（返回 ChessGameVsPlayer.html）
+    httpServer_.Get("/pvp", [this](const http::HttpRequest& req, http::HttpResponse* resp) {
+        // 验证登录状态
+        auto session = getSessionManager()->getSession(req, resp);
+        if (session->getValue("isLoggedIn") != "true")
+        {
+            json errorResp;
+            errorResp["status"] = "error";
+            errorResp["message"] = "Unauthorized";
+            std::string errorBody = errorResp.dump(4);
+            packageResp(req.getVersion(), http::HttpResponse::k401Unauthorized,
+                        "Unauthorized", true, "application/json", errorBody.size(),
+                        errorBody, resp);
+            return;
+        }
+
+        std::string userIdStr = session->getValue("userId");
+        std::string username  = session->getValue("username");
+
+        // 返回 PVP 对战页面
+        FileUtil fileUtil("../WebApps/GomokuServer/resource/ChessGameVsPlayer.html");
+        if (!fileUtil.isValid())
+        {
+            LOG_WARN << "ChessGameVsPlayer.html not found";
+            resp->setStatusCode(http::HttpResponse::k404NotFound);
+            resp->setStatusMessage("Not Found");
+            resp->setCloseConnection(true);
+            return;
+        }
+        std::vector<char> content(fileUtil.size());
+        fileUtil.readFile(content);
+        std::string contentStr(content.begin(), content.end());
+
+        // 注入 userId 和 username 供前端使用
+        size_t headEnd = contentStr.find("</head>");
+        if (headEnd != std::string::npos)
+        {
+            std::string script = "<script>"
+                "var INJECTED_USERID = '" + userIdStr + "';"
+                "var INJECTED_USERNAME = '" + username + "';"
+                "</script>";
+            contentStr.insert(headEnd, script);
+        }
+
+        resp->setStatusLine(req.getVersion(), http::HttpResponse::k200Ok, "OK");
+        resp->setContentType("text/html");
+        resp->setBody(contentStr);
+        resp->setContentLength(contentStr.size());
+        resp->setCloseConnection(false);
+    });
+}
+
+// ========== PVP 房间管理 ==========
+int GomokuServer::createGameRoom(int player1, int player2)
+{
+    int roomId = nextRoomId_++;
+    auto room = std::make_shared<GameRoom>(roomId, player1, player2);
+
+    std::lock_guard<std::mutex> lock(mutexForGameRooms_);
+    gameRooms_[roomId] = room;
+
+    LOG_INFO << "GameRoom created: roomId=" << roomId
+             << " player1=" << player1 << " player2=" << player2;
+    return roomId;
+}
+
+std::shared_ptr<GameRoom> GomokuServer::getGameRoom(int roomId)
+{
+    std::lock_guard<std::mutex> lock(mutexForGameRooms_);
+    auto it = gameRooms_.find(roomId);
+    return (it != gameRooms_.end()) ? it->second : nullptr;
+}
+
+int GomokuServer::getRoomByUserId(int userId) const
+{
+    std::lock_guard<std::mutex> lock(mutexForGameRooms_);
+    for (const auto& [roomId, room] : gameRooms_)
+    {
+        if (room->player1() == userId || room->player2() == userId)
+        {
+            return roomId;
+        }
+    }
+    return 0;
+}
+
+void GomokuServer::removeGameRoom(int roomId)
+{
+    std::lock_guard<std::mutex> lock(mutexForGameRooms_);
+    auto it = gameRooms_.find(roomId);
+    if (it != gameRooms_.end())
+    {
+        LOG_INFO << "GameRoom removed: roomId=" << roomId;
+        gameRooms_.erase(it);
+    }
 }
 
 void GomokuServer::restartChessGameVsAi(const http::HttpRequest &req, http::HttpResponse *resp)

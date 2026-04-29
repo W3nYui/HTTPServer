@@ -1,8 +1,30 @@
 #include "../../include/handlers/MenuHandler.h"
 
+/**
+ * @brief 转义字符串用于嵌入 JavaScript 字符串字面量
+ * 替换 \ ' " 和换行符，防止破坏 JS 语法
+ */
+static std::string escapeForJsString(const std::string& s)
+{
+    std::string out;
+    out.reserve(s.size() + 8);
+    for (char c : s)
+    {
+        switch (c)
+        {
+            case '\\': out += "\\\\"; break;
+            case '\'': out += "\\'";  break;
+            case '\"': out += "\\\""; break;
+            case '\n': out += "\\n";  break;
+            case '\r': out += "\\r";  break;
+            default:   out += c;      break;
+        }
+    }
+    return out;
+}
+
 void MenuHandler::handle(const http::HttpRequest &req, http::HttpResponse *resp)
 {
-    // JSON 解析使用 try catch 捕获异常
     try
     {
         // 检查用户是否已登录
@@ -10,7 +32,6 @@ void MenuHandler::handle(const http::HttpRequest &req, http::HttpResponse *resp)
         LOG_INFO << "session->getValue(\"isLoggedIn\") = " << session->getValue("isLoggedIn");
         if (session->getValue("isLoggedIn") != "true")
         {
-            // 用户未登录，返回未授权错误
             json errorResp;
             errorResp["status"] = "error";
             errorResp["message"] = "Unauthorized";
@@ -22,9 +43,8 @@ void MenuHandler::handle(const http::HttpRequest &req, http::HttpResponse *resp)
             return;
         }
 
-        // 获取用户信息
-        int userId = std::stoi(session->getValue("userId")); // 这里的userid实际上是用户在mysql中的序列号
-        std::string username = session->getValue("username"); // 这里才是实际用户名
+        int userId = std::stoi(session->getValue("userId"));
+        std::string username = session->getValue("username");
 
         std::string reqFile("../WebApps/GomokuServer/resource/menu.html");
         FileUtil fileOperater(reqFile);
@@ -35,28 +55,25 @@ void MenuHandler::handle(const http::HttpRequest &req, http::HttpResponse *resp)
         }
 
         std::vector<char> buffer(fileOperater.size());
-        fileOperater.readFile(buffer); // 读出文件数据
+        fileOperater.readFile(buffer);
         std::string htmlContent(buffer.data(), buffer.size());
 
-        // 在HTML内容中插入userId
+        // 注入 userId 和 username（转义防止特殊字符破坏JS语法）
         size_t headEnd = htmlContent.find("</head>");
         if (headEnd != std::string::npos)
         {
-            std::string script = "<script>const userId = '" + std::to_string(userId) + "';</script>";
+            std::string script = "<script>"
+                "var INJECTED_USERID = '" + std::to_string(userId) + "';"
+                "var INJECTED_USERNAME = '" + escapeForJsString(username) + "';"
+                "</script>";
             htmlContent.insert(headEnd, script);
         }
 
         server_->packageResp(req.getVersion(), http::HttpResponse::k200Ok, "OK"
                     , false, "text/html", htmlContent.size(), htmlContent, resp);
-        // resp->setStatusLine(req.getVersion(), http::HttpResponse::k200Ok, "OK");
-        // resp->setCloseConnection(false);
-        // resp->setContentType("text/html");
-        // resp->setContentLength(htmlContent.size());
-        // resp->setBody(htmlContent);
     }
     catch (const std::exception &e)
     {
-        // 捕获异常，返回错误信息
         json failureResp;
         failureResp["status"] = "error";
         failureResp["message"] = e.what();

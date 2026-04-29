@@ -8,6 +8,9 @@
 
 
 #include "AiGame.h"
+#include "GameRoom.h"
+#include "MatchmakingPool.h"
+#include "ChatManager.h"
 #include "../../../HttpServer/include/http/HttpServer.h"
 #include "../../../HttpServer/include/utils/MysqlUtil.h"
 #include "../../../HttpServer/include/utils/FileUtil.h"
@@ -22,6 +25,7 @@ class AiGameStartHandler;
 class LogoutHandler;
 class AiGameMoveHandler;
 class GameBackendHandler;
+class GameWsHandler;
 
 #define DURING_GAME 1 
 #define GAME_OVER 2
@@ -90,7 +94,57 @@ private:
         }
         return 0;
     }
-    
+
+    // ========== WebSocket / PVP / 聊天 对外接口 ==========
+
+    /**
+     * @brief 获取底层 HttpServer（用于访问 WebSocketServer）
+     */
+    http::HttpServer& getHttpServer()
+    {
+        return httpServer_;
+    }
+
+    /**
+     * @brief 获取匹配池
+     */
+    MatchmakingPool& getMatchmakingPool()
+    {
+        return matchmakingPool_;
+    }
+
+    /**
+     * @brief 获取聊天管理器
+     */
+    ChatManager& getChatManager()
+    {
+        return chatManager_;
+    }
+
+    /**
+     * @brief 创建 PVP 对局房间
+     * @param player1 黑棋（先手）
+     * @param player2 白棋（后手）
+     * @return 房间 ID
+     */
+    int createGameRoom(int player1, int player2);
+
+    /**
+     * @brief 获取对局房间
+     */
+    std::shared_ptr<GameRoom> getGameRoom(int roomId);
+
+    /**
+     * @brief 通过用户 ID 查找其所在的房间号
+     * @return 房间号，0 表示不在任何房间
+     */
+    int getRoomByUserId(int userId) const;
+
+    /**
+     * @brief 移除对局房间
+     */
+    void removeGameRoom(int roomId);
+
 private:
     friend class EntryHandler;
     friend class LoginHandler;
@@ -100,6 +154,7 @@ private:
     friend class LogoutHandler;
     friend class AiGameMoveHandler;
     friend class GameBackendHandler;
+    friend class GameWsHandler;
 
 private:
     enum GameType
@@ -120,4 +175,14 @@ private:
     std::mutex                                       mutexForOnlineUsers_; 
     // 最高在线人数
     std::atomic<int>                                 maxOnline_;
+    // PVP 匹配池
+    MatchmakingPool                                  matchmakingPool_;
+    // 聊天管理器（大厅聊天 + 房间聊天）
+    ChatManager                                      chatManager_;
+    // roomId -> GameRoom PVP 对局房间
+    std::unordered_map<int, std::shared_ptr<GameRoom>> gameRooms_;
+    mutable std::mutex                               mutexForGameRooms_;
+    std::atomic<int>                                 nextRoomId_{1}; // 自增房间 ID
+    // WebSocket 消息处理器
+    std::shared_ptr<GameWsHandler>                   wsHandler_;
 };

@@ -74,8 +74,13 @@ void HttpServer::onConnection(const muduo::net::TcpConnectionPtr& conn)
         }
         conn->setContext(HttpContext()); // 设置muduo库 在其中传入一个HttpContext对象 用来管理http数据解析的状态机
     }
-    else 
+    else
     {
+        // 清理 WebSocket 连接
+        if (wsServer_.isWebSocket(conn))
+        {
+            wsServer_.removeConnection(conn);
+        }
         if (useSSL_)
         {
             sslConns_.erase(conn);
@@ -93,6 +98,22 @@ void HttpServer::onMessage(const muduo::net::TcpConnectionPtr &conn,
                            muduo::net::Buffer *buf,
                            muduo::Timestamp receiveTime)
 {
+    // 如果该连接已升级为 WebSocket，则走 WebSocket 帧处理流程
+    if (wsServer_.isWebSocket(conn))
+    {
+        try
+        {
+            wsServer_.processFrame(conn, buf);
+        }
+        catch (const std::exception& e)
+        {
+            LOG_ERROR << "WebSocket processFrame error: " << e.what();
+            wsServer_.removeConnection(conn);
+            conn->shutdown();
+        }
+        return;
+    }
+
     try
     {
         // 这层判断只是代表是否支持ssl
@@ -164,10 +185,11 @@ void HttpServer::onRequest(const muduo::net::TcpConnectionPtr &conn, const HttpR
 {
     HttpRequest mutableReq = req; // 设置客户端IP地址
     mutableReq.setClientIP(conn->peerAddress().toIp());
+    mutableReq.setConnectionPtr(&conn); // 设置TCP连接指针 用于WebSocket升级
 
     const std::string &connection = mutableReq.getHeader("Connection");
     bool checkClose = ((connection == "close") || // 如果有Connection头 且值为close 则关闭连接
-                  (mutableReq.getVersion() == "HTTP/1.0" && connection != "Keep-Alive"));
+                  (mutableReq.getVersion() == "HTTP/1.0" && connection != "Keep-Alive")); // 如果不是长连接版本 则关闭连接
     HttpResponse response(checkClose); // 设置响应
 
     httpCallback_(mutableReq, &response);
@@ -212,8 +234,8 @@ void HttpServer::handleRequest(const HttpRequest &req, HttpResponse *resp)
         // 路由处理
         if (!router_.route(mutableReq, resp))
         {
-            LOG_INFO << "请求的啥，url：" << req.method() << " " << req.path();
-            LOG_INFO << "未找到路由，返回404";
+            LOG_INFO << "请求的url:" << req.method() << " " << req.path();
+            LOG_INFO << "未找到路由,返回404";
             resp->setStatusCode(HttpResponse::k404NotFound);
             resp->setStatusMessage("Not Found");
             resp->setCloseConnection(true);

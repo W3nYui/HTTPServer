@@ -54,6 +54,7 @@ void LoginHandler::handle(const http::HttpRequest &req, http::HttpResponse *resp
                 json successResp;
                 successResp["success"] = true;
                 successResp["userId"] = userId;
+                successResp["username"] = username;
                 std::string successBody = successResp.dump(4); // 格式化 JSON 字符串，缩进 4 个空格
 
                 resp->setStatusLine(req.getVersion(), http::HttpResponse::k200Ok, "OK");
